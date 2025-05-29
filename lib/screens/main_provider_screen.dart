@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'pending_orders_screen.dart';
 import 'completed_orders_screen.dart';
+import 'accepted_orders_screen.dart';
 
 class MainProviderScreen extends StatefulWidget {
   final String token;
@@ -18,6 +19,7 @@ class _MainProviderScreenState extends State<MainProviderScreen> {
   Widget build(BuildContext context) {
     final screens = [
       PendingOrdersScreen(token: widget.token),
+      AcceptedOrdersScreen(token: widget.token),
       CompletedOrdersScreen(token: widget.token),
     ];
 
@@ -30,6 +32,10 @@ class _MainProviderScreenState extends State<MainProviderScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.assignment),
             label: 'Pending',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.work_outline),
+            label: 'Accepted',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.check_circle),

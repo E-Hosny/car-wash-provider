@@ -1,17 +1,16 @@
-// lib/screens/completed_orders_screen.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-class CompletedOrdersScreen extends StatefulWidget {
+class AcceptedOrdersScreen extends StatefulWidget {
   final String token;
-  const CompletedOrdersScreen({super.key, required this.token});
+  const AcceptedOrdersScreen({super.key, required this.token});
 
   @override
-  State<CompletedOrdersScreen> createState() => _CompletedOrdersScreenState();
+  State<AcceptedOrdersScreen> createState() => _AcceptedOrdersScreenState();
 }
 
-class _CompletedOrdersScreenState extends State<CompletedOrdersScreen> {
+class _AcceptedOrdersScreenState extends State<AcceptedOrdersScreen> {
   List orders = [];
   bool loading = true;
 
@@ -23,17 +22,17 @@ class _CompletedOrdersScreenState extends State<CompletedOrdersScreen> {
 
   Future<void> fetchOrders() async {
     final res = await http.get(
-      Uri.parse('http://10.0.2.2:8000/api/orders/completed'),
+      Uri.parse('http://10.0.2.2:8000/api/orders/accepted'),
       headers: {'Authorization': 'Bearer ${widget.token}'},
     );
     if (res.statusCode == 200) {
-      final allOrders = jsonDecode(res.body);
+      final decoded = jsonDecode(res.body);
       setState(() {
-        orders = allOrders;
+        orders = decoded;
         loading = false;
       });
     } else {
-      print('❌ Error fetching completed orders: ${res.body}');
+      print('❌ Error fetching accepted orders: ${res.body}');
     }
   }
 
@@ -66,13 +65,33 @@ class _CompletedOrdersScreenState extends State<CompletedOrdersScreen> {
     );
   }
 
+  Future<void> updateStatus(int orderId, String status) async {
+    final res = await http.post(
+      Uri.parse('http://10.0.2.2:8000/api/orders/$orderId/status'),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'status': status}),
+    );
+
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(data['message'] ?? '✅ Status updated')),
+      );
+      fetchOrders();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('❌ Failed to update status')),
+      );
+      print('❌ Error updating status: ${res.body}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (loading) return const Center(child: CircularProgressIndicator());
-
-    if (orders.isEmpty) {
-      return const Center(child: Text("No completed orders."));
-    }
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -121,8 +140,29 @@ class _CompletedOrdersScreenState extends State<CompletedOrdersScreen> {
                     fontSize: 16,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text('Completed at: ${order['updated_at']}'),
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: PopupMenuButton<String>(
+                    onSelected: (value) => updateStatus(order['id'], value),
+                    itemBuilder: (_) => [
+                      const PopupMenuItem(
+                          value: 'in_progress', child: Text('🛠 Start')),
+                      const PopupMenuItem(
+                          value: 'completed', child: Text('✔ Complete')),
+                    ],
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.blue.shade50,
+                      ),
+                      child: const Text('Update Status',
+                          style: TextStyle(color: Colors.blue)),
+                    ),
+                  ),
+                )
               ],
             ),
           ),
