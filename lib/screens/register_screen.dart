@@ -126,7 +126,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             const SizedBox(height: 10),
             Image.asset(
               'assets/logo.png',
-              height: 100,
+              height: 250,
+              width: 250,
             ),
             const SizedBox(height: 30),
             buildTextField(

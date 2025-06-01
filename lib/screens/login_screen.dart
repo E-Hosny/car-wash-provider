@@ -124,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           children: [
             const SizedBox(height: 10),
-            Image.asset('assets/logo.png', height: 100),
+            Image.asset('assets/logo.png', height: 250, width: 250),
             const SizedBox(height: 30),
             buildTextField(
               label: 'Phone Number',
