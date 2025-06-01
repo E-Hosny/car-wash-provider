@@ -134,6 +134,22 @@ class _AcceptedOrdersScreenState extends State<AcceptedOrdersScreen> {
                     style: const TextStyle(fontSize: 16)),
               ],
             ),
+
+            const SizedBox(height: 10),
+
+            // السيارة
+            if (order['car'] != null)
+              Row(
+                children: [
+                  const Icon(Icons.directions_car_outlined,
+                      color: Colors.black54),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${order['car']['brand']['name']} ${order['car']['model']['name']}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ],
+              ),
             const SizedBox(height: 10),
 
             // Address
