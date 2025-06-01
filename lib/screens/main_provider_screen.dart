@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'pending_orders_screen.dart';
-import 'completed_orders_screen.dart';
 import 'accepted_orders_screen.dart';
+import 'started_orders_screen.dart'; // ✅ أضف هذا
+import 'completed_orders_screen.dart';
 
 class MainProviderScreen extends StatefulWidget {
   final String token;
@@ -19,6 +20,7 @@ class _MainProviderScreenState extends State<MainProviderScreen> {
     final screens = [
       PendingOrdersScreen(token: widget.token),
       AcceptedOrdersScreen(token: widget.token),
+      StartedOrdersScreen(token: widget.token), // ✅ الشاشة الجديدة
       CompletedOrdersScreen(token: widget.token),
     ];
 
@@ -40,6 +42,10 @@ class _MainProviderScreenState extends State<MainProviderScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.work_outline),
             label: 'Accepted',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.play_arrow_outlined), // ✅ أيقونة الطلبات الجارية
+            label: 'Started',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.check_circle),
