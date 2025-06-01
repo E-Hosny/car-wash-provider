@@ -1,9 +1,8 @@
-// lib/screens/login_screen.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'register_screen.dart';
-import 'main_provider_screen.dart'; // ✅ استيراد الشاشة الرئيسية
+import 'main_provider_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -74,38 +73,75 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Widget buildTextField({
+    required String label,
+    required IconData icon,
+    required TextEditingController controller,
+    String? errorText,
+    bool obscure = false,
+    TextInputType? keyboardType,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: obscure,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        errorText: errorText,
+        prefixIcon: Icon(icon, color: Colors.black),
+        labelStyle: const TextStyle(color: Colors.black87),
+        filled: true,
+        fillColor: Colors.grey[100],
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: Colors.black, width: 1.4),
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('🔐 Provider Login')),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text(
+          'Provider Login',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 1,
+        iconTheme: const IconThemeData(color: Colors.black),
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            Image.asset('assets/logo.png', height: 120),
-            const SizedBox(height: 20),
-            TextField(
+            const SizedBox(height: 10),
+            Image.asset('assets/logo.png', height: 100),
+            const SizedBox(height: 30),
+            buildTextField(
+              label: 'Phone Number',
+              icon: Icons.phone,
               controller: phoneController,
               keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                labelText: 'Phone Number',
-                errorText: phoneError,
-                border: OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.phone),
-              ),
+              errorText: phoneError,
             ),
-            const SizedBox(height: 15),
-            TextField(
+            const SizedBox(height: 16),
+            buildTextField(
+              label: 'Password',
+              icon: Icons.lock,
               controller: passwordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                errorText: passwordError,
-                border: OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.lock),
-              ),
+              obscure: true,
+              errorText: passwordError,
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 20),
             if (generalError != null)
               Text(
                 generalError!,
@@ -115,13 +151,32 @@ class _LoginScreenState extends State<LoginScreen> {
             SizedBox(
               width: double.infinity,
               height: 50,
-              child: ElevatedButton(
+              child: ElevatedButton.icon(
                 onPressed: loading ? null : login,
-                child: loading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Login'),
+                icon: loading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.login),
+                label: Text(
+                  loading ? 'Logging in...' : 'Login',
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
               ),
             ),
+            const SizedBox(height: 16),
             TextButton(
               onPressed: () {
                 Navigator.push(
@@ -129,7 +184,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   MaterialPageRoute(builder: (_) => const RegisterScreen()),
                 );
               },
-              child: const Text('Don\'t have an account? Register here'),
+              child: const Text(
+                'Don\'t have an account? Register here',
+                style: TextStyle(color: Colors.black54),
+              ),
             ),
           ],
         ),

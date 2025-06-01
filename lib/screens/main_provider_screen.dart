@@ -1,4 +1,3 @@
-// lib/screens/main_provider_screen.dart
 import 'package:flutter/material.dart';
 import 'pending_orders_screen.dart';
 import 'completed_orders_screen.dart';
@@ -24,9 +23,14 @@ class _MainProviderScreenState extends State<MainProviderScreen> {
     ];
 
     return Scaffold(
+      backgroundColor: Colors.white,
       body: screens[currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentIndex,
+        backgroundColor: Colors.white,
+        selectedItemColor: Colors.black,
+        unselectedItemColor: Colors.black54,
+        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
         onTap: (index) => setState(() => currentIndex = index),
         items: const [
           BottomNavigationBarItem(

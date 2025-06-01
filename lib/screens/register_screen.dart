@@ -54,8 +54,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('✅ Registration successful')),
       );
-
-      // الانتقال إلى شاشة تسجيل الدخول
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -77,86 +75,117 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
+  Widget buildTextField({
+    required String label,
+    required TextEditingController controller,
+    String? errorText,
+    bool obscure = false,
+    TextInputType? keyboardType,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: obscure,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        errorText: errorText,
+        labelStyle: const TextStyle(color: Colors.black87),
+        filled: true,
+        fillColor: Colors.grey[100],
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: Colors.black, width: 1.4),
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('📝 Provider Registration')),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text(
+          'Provider Registration',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 1,
+        iconTheme: const IconThemeData(color: Colors.black),
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Center(
-              child: Image.asset(
-                'assets/logo.png', // تأكد من وجود الصورة
-                height: 120,
-              ),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: nameController,
-              decoration: InputDecoration(
-                labelText: 'Name',
-                errorText: nameError,
-                border: OutlineInputBorder(),
-              ),
-            ),
             const SizedBox(height: 10),
-            TextField(
+            Image.asset(
+              'assets/logo.png',
+              height: 100,
+            ),
+            const SizedBox(height: 30),
+            buildTextField(
+              label: 'Full Name',
+              controller: nameController,
+              errorText: nameError,
+            ),
+            const SizedBox(height: 14),
+            buildTextField(
+              label: 'Phone',
               controller: phoneController,
               keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                labelText: 'Phone',
-                errorText: phoneError,
-                border: OutlineInputBorder(),
-              ),
+              errorText: phoneError,
             ),
-            const SizedBox(height: 10),
-            TextField(
+            const SizedBox(height: 14),
+            buildTextField(
+              label: 'Email',
               controller: emailController,
-              decoration: InputDecoration(
-                labelText: 'Email',
-                errorText: emailError,
-                border: OutlineInputBorder(),
-              ),
+              keyboardType: TextInputType.emailAddress,
+              errorText: emailError,
             ),
-            const SizedBox(height: 10),
-            TextField(
+            const SizedBox(height: 14),
+            buildTextField(
+              label: 'Password',
               controller: passwordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                errorText: passwordError,
-                border: OutlineInputBorder(),
-              ),
+              obscure: true,
+              errorText: passwordError,
             ),
-            const SizedBox(height: 10),
-            TextField(
+            const SizedBox(height: 14),
+            buildTextField(
+              label: 'Confirm Password',
               controller: confirmPasswordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: 'Confirm Password',
-                errorText: confirmPasswordError,
-                border: OutlineInputBorder(),
-              ),
+              obscure: true,
+              errorText: confirmPasswordError,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             if (generalError != null)
-              Text(
-                generalError!,
-                style: const TextStyle(color: Colors.red),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Text(
+                  generalError!,
+                  style: const TextStyle(color: Colors.red),
+                ),
               ),
-            const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
               height: 50,
-              child: ElevatedButton(
+              child: ElevatedButton.icon(
                 onPressed: register,
+                icon: const Icon(Icons.check_circle_outline),
+                label: const Text('Register',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: Colors.black,
                   foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('Register'),
               ),
             ),
           ],

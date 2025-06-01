@@ -26,9 +26,8 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
       headers: {'Authorization': 'Bearer ${widget.token}'},
     );
     if (res.statusCode == 200) {
-      final decoded = jsonDecode(res.body);
       setState(() {
-        orders = decoded;
+        orders = jsonDecode(res.body);
         loading = false;
       });
     } else {
@@ -50,7 +49,6 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('❌ Failed to accept order')),
       );
-      print('❌ Accept error: ${res.body}');
     }
   }
 
@@ -74,126 +72,199 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('❌ Failed to update status')),
       );
-      print('❌ Error updating status: ${res.body}');
     }
   }
 
-  Widget buildStatusBadge(String status) {
-    Color bgColor;
-    switch (status) {
-      case 'completed':
-        bgColor = Colors.green.shade100;
-        break;
-      case 'in_progress':
-        bgColor = Colors.orange.shade100;
-        break;
-      case 'accepted':
-        bgColor = Colors.blue.shade100;
-        break;
-      default:
-        bgColor = Colors.grey.shade300;
-    }
+  String formatDateTime(String? datetime) {
+    if (datetime == null) return 'N/A';
+    final dt = DateTime.tryParse(datetime)?.toLocal();
+    if (dt == null) return 'N/A';
+
+    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
+        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  }
+
+  Widget buildOrderCard(order) {
+    final customer = order['customer'];
+    final services = order['services'] as List;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.shade200),
       ),
-      child: Text(
-        '📌 Status: $status',
-        style: const TextStyle(fontWeight: FontWeight.bold),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // الحالة + السعر
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Order #${order['id']}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.black87,
+                  ),
+                ),
+                Text(
+                  '💰 ${order['total'] ?? 0} SAR',
+                  style: const TextStyle(
+                    color: Colors.green,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 20),
+
+            // الاسم
+            Row(
+              children: [
+                const Icon(Icons.person, color: Colors.black54),
+                const SizedBox(width: 8),
+                Text(customer['name'] ?? 'N/A',
+                    style: const TextStyle(fontSize: 16)),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            // الهاتف
+            Row(
+              children: [
+                const Icon(Icons.phone, color: Colors.black54),
+                const SizedBox(width: 8),
+                Text(customer['phone'] ?? 'N/A',
+                    style: const TextStyle(fontSize: 16)),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            // العنوان
+            Row(
+              children: [
+                const Icon(Icons.location_on_outlined, color: Colors.black54),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(order['address'] ?? 'N/A',
+                      style: const TextStyle(fontSize: 16)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            // الوقت
+            Row(
+              children: [
+                const Icon(Icons.access_time_outlined, color: Colors.black54),
+                const SizedBox(width: 8),
+                Text(
+                  formatDateTime(order['created_at']),
+                  style: const TextStyle(fontSize: 15, color: Colors.black87),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            // الخدمات
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.cleaning_services_outlined,
+                    color: Colors.black54),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    services.map((s) => s['name']).join(', '),
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            // زر القبول أو التحديث
+            Align(
+              alignment: Alignment.centerRight,
+              child: order['status'] == 'pending'
+                  ? ElevatedButton.icon(
+                      onPressed: () => acceptOrder(order['id']),
+                      icon: const Icon(Icons.check_circle_outline),
+                      label: const Text('Accept Order'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        textStyle: const TextStyle(fontSize: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    )
+                  : PopupMenuButton<String>(
+                      onSelected: (value) => updateStatus(order['id'], value),
+                      itemBuilder: (_) => [
+                        const PopupMenuItem(
+                            value: 'in_progress', child: Text('🛠 Start')),
+                        const PopupMenuItem(
+                            value: 'completed', child: Text('✔ Complete')),
+                      ],
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.grey.shade100,
+                        ),
+                        child: const Text(
+                          'Update Status',
+                          style: TextStyle(color: Colors.black, fontSize: 16),
+                        ),
+                      ),
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    if (loading) return const Center(child: CircularProgressIndicator());
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: orders.length,
-      itemBuilder: (context, index) {
-        final order = orders[index];
-        final customer = order['customer'];
-        final services = order['services'] as List;
-
-        return Card(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 4,
-          margin: const EdgeInsets.only(bottom: 20),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '📦 Order #${order['id']}',
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const Divider(),
-                Text('👤 Customer: ${customer['name']}'),
-                Text('📱 Phone: ${customer['phone']}'),
-                Text('📍 Address: ${order['address'] ?? 'N/A'}'),
-                Text(
-                    '🕒 Date: ${order['created_at'].toString().substring(0, 16)}'),
-                const SizedBox(height: 6),
-                buildStatusBadge(order['status']),
-                const SizedBox(height: 10),
-                const Text('🧼 Services:',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                ...services.map((s) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: Text('- ${s['name']} (${s['price']} SAR)'),
-                    )),
-                const SizedBox(height: 8),
-                Text(
-                  '💰 Total: ${order['total']} SAR',
-                  style: const TextStyle(
-                    color: Colors.green,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 10),
-
-                /// إما زر Accept أو زر تغيير الحالة
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: order['status'] == 'pending'
-                      ? ElevatedButton(
-                          onPressed: () => acceptOrder(order['id']),
-                          child: const Text('✅ Accept Order'),
-                        )
-                      : PopupMenuButton<String>(
-                          onSelected: (value) =>
-                              updateStatus(order['id'], value),
-                          itemBuilder: (_) => [
-                            const PopupMenuItem(
-                                value: 'in_progress', child: Text('🛠 Start')),
-                            const PopupMenuItem(
-                                value: 'completed', child: Text('✔ Complete')),
-                          ],
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              color: Colors.blue.shade50,
-                            ),
-                            child: const Text('Update Status',
-                                style: TextStyle(color: Colors.blue)),
-                          ),
-                        ),
-                )
-              ],
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text(
+          'Pending Orders',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 1,
+        iconTheme: const IconThemeData(color: Colors.black),
+      ),
+      body: loading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: orders.length,
+              itemBuilder: (context, index) {
+                return buildOrderCard(orders[index]);
+              },
             ),
-          ),
-        );
-      },
     );
   }
 }

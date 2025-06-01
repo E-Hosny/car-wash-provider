@@ -1,4 +1,3 @@
-// lib/screens/completed_orders_screen.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -27,9 +26,8 @@ class _CompletedOrdersScreenState extends State<CompletedOrdersScreen> {
       headers: {'Authorization': 'Bearer ${widget.token}'},
     );
     if (res.statusCode == 200) {
-      final allOrders = jsonDecode(res.body);
       setState(() {
-        orders = allOrders;
+        orders = jsonDecode(res.body);
         loading = false;
       });
     } else {
@@ -37,97 +35,176 @@ class _CompletedOrdersScreenState extends State<CompletedOrdersScreen> {
     }
   }
 
-  Widget buildStatusBadge(String status) {
-    Color bgColor;
-    switch (status) {
-      case 'completed':
-        bgColor = Colors.green.shade100;
-        break;
-      case 'in_progress':
-        bgColor = Colors.orange.shade100;
-        break;
-      case 'accepted':
-        bgColor = Colors.blue.shade100;
-        break;
-      default:
-        bgColor = Colors.grey.shade300;
-    }
+  String formatDateTime(String? datetime) {
+    if (datetime == null) return 'N/A';
+    final dt = DateTime.tryParse(datetime)?.toLocal();
+    if (dt == null) return 'N/A';
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        '📌 Status: $status',
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
-    );
+    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
+        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
   @override
   Widget build(BuildContext context) {
-    if (loading) return const Center(child: CircularProgressIndicator());
-
-    if (orders.isEmpty) {
-      return const Center(child: Text("No completed orders."));
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: orders.length,
-      itemBuilder: (context, index) {
-        final order = orders[index];
-        final customer = order['customer'];
-        final services = order['services'] as List;
-
-        return Card(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 4,
-          margin: const EdgeInsets.only(bottom: 20),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '📦 Order #${order['id']}',
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const Divider(),
-                Text('👤 Customer: ${customer['name']}'),
-                Text('📱 Phone: ${customer['phone']}'),
-                Text('📍 Address: ${order['address'] ?? 'N/A'}'),
-                Text(
-                    '🕒 Date: ${order['created_at'].toString().substring(0, 16)}'),
-                const SizedBox(height: 6),
-                buildStatusBadge(order['status']),
-                const SizedBox(height: 10),
-                const Text('🧼 Services:',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-                ...services.map((s) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: Text('- ${s['name']} (${s['price']} SAR)'),
-                    )),
-                const SizedBox(height: 8),
-                Text(
-                  '💰 Total: ${order['total']} SAR',
-                  style: const TextStyle(
-                    color: Colors.green,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text(
+          'Completed Orders',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 1,
+        iconTheme: const IconThemeData(color: Colors.black),
+      ),
+      body: loading
+          ? const Center(child: CircularProgressIndicator())
+          : orders.isEmpty
+              ? const Center(
+                  child: Text(
+                    "No completed orders.",
+                    style: TextStyle(fontSize: 16),
                   ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: orders.length,
+                  itemBuilder: (context, index) {
+                    final order = orders[index];
+                    final customer = order['customer'];
+                    final services = order['services'] as List;
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Order ID + Total
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Order #${order['id']}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                Text(
+                                  '💰 ${order['total']} SAR',
+                                  style: const TextStyle(
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Divider(height: 20),
+
+                            // Customer
+                            Row(
+                              children: [
+                                const Icon(Icons.person, color: Colors.black54),
+                                const SizedBox(width: 8),
+                                Text(customer['name'] ?? 'N/A',
+                                    style: const TextStyle(fontSize: 16)),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+
+                            // Phone
+                            Row(
+                              children: [
+                                const Icon(Icons.phone, color: Colors.black54),
+                                const SizedBox(width: 8),
+                                Text(customer['phone'] ?? 'N/A',
+                                    style: const TextStyle(fontSize: 16)),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+
+                            // Address
+                            Row(
+                              children: [
+                                const Icon(Icons.location_on_outlined,
+                                    color: Colors.black54),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(order['address'] ?? 'N/A',
+                                      style: const TextStyle(fontSize: 16)),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+
+                            // Date
+                            Row(
+                              children: [
+                                const Icon(Icons.access_time_outlined,
+                                    color: Colors.black54),
+                                const SizedBox(width: 8),
+                                Text(
+                                  formatDateTime(order['created_at']),
+                                  style: const TextStyle(
+                                      fontSize: 15, color: Colors.black87),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+
+                            // Services
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(Icons.cleaning_services_outlined,
+                                    color: Colors.black54),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    services.map((s) => s['name']).join(', '),
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Completed at
+                            Row(
+                              children: [
+                                const Icon(Icons.check_circle_outline,
+                                    color: Colors.black54),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Completed at: ${formatDateTime(order['updated_at'])}',
+                                  style: const TextStyle(
+                                      fontSize: 14, color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
-                const SizedBox(height: 8),
-                Text('Completed at: ${order['updated_at']}'),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }
