@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'pending_orders_screen.dart';
 import 'accepted_orders_screen.dart';
@@ -22,39 +21,6 @@ class _MainProviderScreenState extends State<MainProviderScreen> {
   @override
   void initState() {
     super.initState();
-
-    // ⬇️ إرسال FCM Token للسيرفر
-    FirebaseMessaging.instance.getToken().then((fcmToken) async {
-      print("✅ FCM Token: $fcmToken");
-
-      final response = await http.post(
-        Uri.parse('http://10.0.2.2:8000/api/fcm-token'),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({'token': fcmToken}),
-      );
-
-      print("🛰️ تم حفظ التوكن: ${response.body}");
-    });
-
-    // ⬇️ استقبال الإشعار أثناء فتح التطبيق (foreground)
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print("📥 إشعار وصلك في Foreground:");
-      print("🔔 Title: ${message.notification?.title}");
-      print("📝 Body: ${message.notification?.body}");
-
-      if (message.notification != null) {
-        final notification = message.notification!;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("${notification.title} - ${notification.body}"),
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
-    });
   }
 
   @override
