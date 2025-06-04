@@ -4,7 +4,9 @@ import 'package:http/http.dart' as http;
 
 class StartedOrdersScreen extends StatefulWidget {
   final String token;
-  const StartedOrdersScreen({super.key, required this.token});
+  final String role; // ✅ أضفنا role
+  const StartedOrdersScreen(
+      {super.key, required this.token, required this.role});
 
   @override
   State<StartedOrdersScreen> createState() => _StartedOrdersScreenState();
@@ -69,6 +71,7 @@ class _StartedOrdersScreenState extends State<StartedOrdersScreen> {
   Widget buildOrderCard(order) {
     final customer = order['customer'];
     final services = order['services'] as List;
+    final assignedUser = order['assigned_user'];
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -89,6 +92,7 @@ class _StartedOrdersScreenState extends State<StartedOrdersScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Order ID + Total
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -111,6 +115,8 @@ class _StartedOrdersScreenState extends State<StartedOrdersScreen> {
               ],
             ),
             const Divider(height: 20),
+
+            // Customer
             Row(
               children: [
                 const Icon(Icons.person, color: Colors.black54),
@@ -120,6 +126,8 @@ class _StartedOrdersScreenState extends State<StartedOrdersScreen> {
               ],
             ),
             const SizedBox(height: 10),
+
+            // Phone
             Row(
               children: [
                 const Icon(Icons.phone, color: Colors.black54),
@@ -129,6 +137,8 @@ class _StartedOrdersScreenState extends State<StartedOrdersScreen> {
               ],
             ),
             const SizedBox(height: 10),
+
+            // Car
             if (order['car'] != null)
               Row(
                 children: [
@@ -142,6 +152,8 @@ class _StartedOrdersScreenState extends State<StartedOrdersScreen> {
                 ],
               ),
             const SizedBox(height: 10),
+
+            // Address
             Row(
               children: [
                 const Icon(Icons.location_on_outlined, color: Colors.black54),
@@ -153,6 +165,8 @@ class _StartedOrdersScreenState extends State<StartedOrdersScreen> {
               ],
             ),
             const SizedBox(height: 10),
+
+            // Date
             Row(
               children: [
                 const Icon(Icons.access_time_outlined, color: Colors.black54),
@@ -164,6 +178,8 @@ class _StartedOrdersScreenState extends State<StartedOrdersScreen> {
               ],
             ),
             const SizedBox(height: 10),
+
+            // Services
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -178,7 +194,31 @@ class _StartedOrdersScreenState extends State<StartedOrdersScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 10),
+
+            // Assigned to (for provider only)
+            if (widget.role == 'provider')
+              Row(
+                children: [
+                  const Icon(Icons.person_pin_circle_outlined,
+                      color: Colors.black54),
+                  const SizedBox(width: 8),
+                  Text(
+                    assignedUser != null
+                        ? 'Assigned to: ${assignedUser['name']}'
+                        : 'Not assigned yet',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: assignedUser != null ? Colors.green : Colors.red,
+                    ),
+                  ),
+                ],
+              ),
+
             const SizedBox(height: 16),
+
+            // Update Status
             Align(
               alignment: Alignment.centerRight,
               child: PopupMenuButton<String>(

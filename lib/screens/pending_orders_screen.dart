@@ -4,7 +4,9 @@ import 'package:http/http.dart' as http;
 
 class PendingOrdersScreen extends StatefulWidget {
   final String token;
-  const PendingOrdersScreen({super.key, required this.token});
+  final String role; // 👈 Add role parameter
+  const PendingOrdersScreen(
+      {super.key, required this.token, required this.role});
 
   @override
   State<PendingOrdersScreen> createState() => _PendingOrdersScreenState();
@@ -12,12 +14,16 @@ class PendingOrdersScreen extends StatefulWidget {
 
 class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
   List orders = [];
+  List workers = [];
   bool loading = true;
 
   @override
   void initState() {
     super.initState();
     fetchOrders();
+    if (widget.role == 'provider') {
+      fetchWorkers();
+    }
   }
 
   Future<void> fetchOrders() async {
@@ -32,6 +38,41 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
       });
     } else {
       print('❌ Error fetching orders: ${res.body}');
+    }
+  }
+
+  Future<void> fetchWorkers() async {
+    final res = await http.get(
+      Uri.parse('http://10.0.2.2:8000/api/workers'),
+      headers: {'Authorization': 'Bearer ${widget.token}'},
+    );
+    if (res.statusCode == 200) {
+      setState(() {
+        workers = jsonDecode(res.body);
+      });
+    } else {
+      print('❌ Error fetching workers: ${res.body}');
+    }
+  }
+
+  Future<void> assignToWorker(int orderId, int workerId) async {
+    final res = await http.post(
+      Uri.parse('http://10.0.2.2:8000/api/orders/$orderId/assign'),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'worker_id': workerId}),
+    );
+    if (res.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('✅ Assigned successfully')),
+      );
+      fetchOrders();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('❌ Failed to assign')),
+      );
     }
   }
 
@@ -79,7 +120,6 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
     if (datetime == null) return 'N/A';
     final dt = DateTime.tryParse(datetime)?.toLocal();
     if (dt == null) return 'N/A';
-
     return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
         '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
@@ -87,6 +127,7 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
   Widget buildOrderCard(order) {
     final customer = order['customer'];
     final services = order['services'] as List;
+    final assignedUser = order['assigned_user'];
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -94,126 +135,94 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
+          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4)),
         ],
         border: Border.all(color: Colors.grey.shade200),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // الحالة + السعر
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Order #${order['id']}',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 18)),
+              Text('💰 ${order['total'] ?? 0} SAR',
+                  style: const TextStyle(
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18)),
+            ],
+          ),
+          const Divider(height: 20),
+          Row(children: [
+            const Icon(Icons.person, color: Colors.black54),
+            const SizedBox(width: 8),
+            Text(customer['name'] ?? 'N/A'),
+          ]),
+          const SizedBox(height: 10),
+          Row(children: [
+            const Icon(Icons.phone, color: Colors.black54),
+            const SizedBox(width: 8),
+            Text(customer['phone'] ?? 'N/A'),
+          ]),
+          const SizedBox(height: 10),
+          if (order['car'] != null)
+            Row(children: [
+              const Icon(Icons.directions_car_outlined, color: Colors.black54),
+              const SizedBox(width: 8),
+              Text(
+                  '${order['car']['brand']['name']} ${order['car']['model']['name']}'),
+            ]),
+          const SizedBox(height: 10),
+          Row(children: [
+            const Icon(Icons.location_on_outlined, color: Colors.black54),
+            const SizedBox(width: 8),
+            Expanded(child: Text(order['address'] ?? 'N/A')),
+          ]),
+          const SizedBox(height: 10),
+          Row(children: [
+            const Icon(Icons.access_time_outlined, color: Colors.black54),
+            const SizedBox(width: 8),
+            Text(formatDateTime(order['created_at'])),
+          ]),
+          const SizedBox(height: 10),
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Icon(Icons.cleaning_services_outlined, color: Colors.black54),
+            const SizedBox(width: 8),
+            Expanded(child: Text(services.map((s) => s['name']).join(', '))),
+          ]),
+          const SizedBox(height: 16),
+          if (widget.role == 'provider')
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Order #${order['id']}',
-                  style: const TextStyle(
+                  assignedUser != null
+                      ? 'Assigned to: ${assignedUser['name']}'
+                      : 'Not assigned yet',
+                  style: TextStyle(
+                    color: assignedUser != null ? Colors.green : Colors.red,
                     fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: Colors.black87,
                   ),
                 ),
-                Text(
-                  '💰 ${order['total'] ?? 0} SAR',
-                  style: const TextStyle(
-                    color: Colors.green,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                  ),
+                DropdownButton<int>(
+                  hint: const Text("Assign to"),
+                  value: null,
+                  items: workers.map<DropdownMenuItem<int>>((worker) {
+                    return DropdownMenuItem<int>(
+                      value: worker['id'],
+                      child: Text(worker['name']),
+                    );
+                  }).toList(),
+                  onChanged: (workerId) {
+                    if (workerId != null) assignToWorker(order['id'], workerId);
+                  },
                 ),
               ],
             ),
-            const Divider(height: 20),
-
-            // الاسم
-            Row(
-              children: [
-                const Icon(Icons.person, color: Colors.black54),
-                const SizedBox(width: 8),
-                Text(customer['name'] ?? 'N/A',
-                    style: const TextStyle(fontSize: 16)),
-              ],
-            ),
-            const SizedBox(height: 10),
-
-            // الهاتف
-            Row(
-              children: [
-                const Icon(Icons.phone, color: Colors.black54),
-                const SizedBox(width: 8),
-                Text(customer['phone'] ?? 'N/A',
-                    style: const TextStyle(fontSize: 16)),
-              ],
-            ),
-            const SizedBox(height: 10),
-
-            // السيارة
-            if (order['car'] != null)
-              Row(
-                children: [
-                  const Icon(Icons.directions_car_outlined,
-                      color: Colors.black54),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${order['car']['brand']['name']} ${order['car']['model']['name']}',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ],
-              ),
-
-            // العنوان
-            const SizedBox(height: 10),
-
-            Row(
-              children: [
-                const Icon(Icons.location_on_outlined, color: Colors.black54),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(order['address'] ?? 'N/A',
-                      style: const TextStyle(fontSize: 16)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-
-            // الوقت
-            Row(
-              children: [
-                const Icon(Icons.access_time_outlined, color: Colors.black54),
-                const SizedBox(width: 8),
-                Text(
-                  formatDateTime(order['created_at']),
-                  style: const TextStyle(fontSize: 15, color: Colors.black87),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-
-            // الخدمات
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.cleaning_services_outlined,
-                    color: Colors.black54),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    services.map((s) => s['name']).join(', '),
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            // زر القبول أو التحديث
+          if (widget.role == 'worker' || widget.role == 'provider')
             Align(
               alignment: Alignment.centerRight,
               child: order['status'] == 'pending'
@@ -224,10 +233,6 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
                         foregroundColor: Colors.white,
-                        textStyle: const TextStyle(fontSize: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
                       ),
                     )
                   : PopupMenuButton<String>(
@@ -245,15 +250,11 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
                           borderRadius: BorderRadius.circular(8),
                           color: Colors.grey.shade100,
                         ),
-                        child: const Text(
-                          'Update Status',
-                          style: TextStyle(color: Colors.black, fontSize: 16),
-                        ),
+                        child: const Text('Update Status'),
                       ),
                     ),
             ),
-          ],
-        ),
+        ]),
       ),
     );
   }
@@ -263,10 +264,8 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          'Pending Orders',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
+        title: const Text('Pending Orders',
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 1,

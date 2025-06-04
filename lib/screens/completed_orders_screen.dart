@@ -4,7 +4,9 @@ import 'package:http/http.dart' as http;
 
 class CompletedOrdersScreen extends StatefulWidget {
   final String token;
-  const CompletedOrdersScreen({super.key, required this.token});
+  final String role; // ✅ أضفنا نوع المستخدم
+  const CompletedOrdersScreen(
+      {super.key, required this.token, required this.role});
 
   @override
   State<CompletedOrdersScreen> createState() => _CompletedOrdersScreenState();
@@ -39,7 +41,6 @@ class _CompletedOrdersScreenState extends State<CompletedOrdersScreen> {
     if (datetime == null) return 'N/A';
     final dt = DateTime.tryParse(datetime)?.toLocal();
     if (dt == null) return 'N/A';
-
     return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
         '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
@@ -74,6 +75,7 @@ class _CompletedOrdersScreenState extends State<CompletedOrdersScreen> {
                     final order = orders[index];
                     final customer = order['customer'];
                     final services = order['services'] as List;
+                    final assignedUser = order['assigned_user'];
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 16),
@@ -138,10 +140,9 @@ class _CompletedOrdersScreenState extends State<CompletedOrdersScreen> {
                                     style: const TextStyle(fontSize: 16)),
                               ],
                             ),
-
                             const SizedBox(height: 10),
 
-                            // السيارة
+                            // Car
                             if (order['car'] != null)
                               Row(
                                 children: [
@@ -154,7 +155,6 @@ class _CompletedOrdersScreenState extends State<CompletedOrdersScreen> {
                                   ),
                                 ],
                               ),
-
                             const SizedBox(height: 10),
 
                             // Address
@@ -201,6 +201,32 @@ class _CompletedOrdersScreenState extends State<CompletedOrdersScreen> {
                                 ),
                               ],
                             ),
+
+                            // Assigned to (for provider)
+                            if (widget.role == 'provider')
+                              Padding(
+                                padding: const EdgeInsets.only(top: 12),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.person_pin_circle_outlined,
+                                        color: Colors.black54),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      assignedUser != null
+                                          ? 'Assigned to: ${assignedUser['name']}'
+                                          : 'Not assigned yet',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: assignedUser != null
+                                            ? Colors.green
+                                            : Colors.red,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
                             const SizedBox(height: 16),
 
                             // Completed at

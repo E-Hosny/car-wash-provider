@@ -4,7 +4,9 @@ import 'package:http/http.dart' as http;
 
 class AcceptedOrdersScreen extends StatefulWidget {
   final String token;
-  const AcceptedOrdersScreen({super.key, required this.token});
+  final String role; // ✅ أضفنا role هنا
+  const AcceptedOrdersScreen(
+      {super.key, required this.token, required this.role});
 
   @override
   State<AcceptedOrdersScreen> createState() => _AcceptedOrdersScreenState();
@@ -70,6 +72,7 @@ class _AcceptedOrdersScreenState extends State<AcceptedOrdersScreen> {
   Widget buildOrderCard(order) {
     final customer = order['customer'];
     final services = order['services'] as List;
+    final assignedUser = order['assigned_user'];
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -77,11 +80,7 @@ class _AcceptedOrdersScreenState extends State<AcceptedOrdersScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
+          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4)),
         ],
         border: Border.all(color: Colors.grey.shade200),
       ),
@@ -134,10 +133,9 @@ class _AcceptedOrdersScreenState extends State<AcceptedOrdersScreen> {
                     style: const TextStyle(fontSize: 16)),
               ],
             ),
-
             const SizedBox(height: 10),
 
-            // السيارة
+            // Car
             if (order['car'] != null)
               Row(
                 children: [
@@ -193,6 +191,27 @@ class _AcceptedOrdersScreenState extends State<AcceptedOrdersScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 10),
+
+            // Assigned to
+            if (widget.role == 'provider')
+              Row(
+                children: [
+                  const Icon(Icons.person_pin_circle_outlined,
+                      color: Colors.black54),
+                  const SizedBox(width: 8),
+                  Text(
+                    assignedUser != null
+                        ? 'Assigned to: ${assignedUser['name']}'
+                        : 'Not assigned yet',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: assignedUser != null ? Colors.green : Colors.red,
+                    ),
+                  ),
+                ],
+              ),
 
             const SizedBox(height: 16),
 
