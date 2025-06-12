@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:map_launcher/map_launcher.dart';
 
 class StartedOrdersScreen extends StatefulWidget {
   final String token;
@@ -60,6 +61,63 @@ class _StartedOrdersScreenState extends State<StartedOrdersScreen> {
     }
   }
 
+  Future<void> openMapsSheet(
+      double latitude, double longitude, String orderId) async {
+    try {
+      final availableMaps = await MapLauncher.installedMaps;
+
+      if (!mounted) return;
+
+      showModalBottomSheet(
+        context: context,
+        builder: (BuildContext context) {
+          return SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'Choose Maps App',
+                    style: Theme.of(context).textTheme.titleLarge,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const Divider(),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: <Widget>[
+                        for (var map in availableMaps)
+                          ListTile(
+                            onTap: () {
+                              map.showMarker(
+                                coords: Coords(latitude, longitude),
+                                title: 'Customer Location #$orderId',
+                              );
+                              Navigator.pop(context);
+                            },
+                            title: Text(map.mapName),
+                            leading: const Icon(Icons.map_outlined),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      print('❌ Error opening maps: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('❌ Error opening maps')),
+      );
+    }
+  }
+
   String formatDateTime(String? datetime) {
     if (datetime == null) return 'N/A';
     final dt = DateTime.tryParse(datetime)?.toLocal();
@@ -72,6 +130,14 @@ class _StartedOrdersScreenState extends State<StartedOrdersScreen> {
     final customer = order['customer'];
     final services = order['services'] as List;
     final assignedUser = order['assigned_user'];
+
+    // Safe conversion of latitude and longitude
+    final latitude = order['latitude'] != null
+        ? double.tryParse(order['latitude'].toString())
+        : null;
+    final longitude = order['longitude'] != null
+        ? double.tryParse(order['longitude'].toString())
+        : null;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -159,8 +225,28 @@ class _StartedOrdersScreenState extends State<StartedOrdersScreen> {
                 const Icon(Icons.location_on_outlined, color: Colors.black54),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(order['address'] ?? 'N/A',
-                      style: const TextStyle(fontSize: 16)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(order['address'] ?? 'N/A',
+                          style: const TextStyle(fontSize: 16)),
+                      if (latitude != null && longitude != null)
+                        TextButton.icon(
+                          onPressed: () => openMapsSheet(
+                            latitude,
+                            longitude,
+                            order['id'].toString(),
+                          ),
+                          icon: const Icon(Icons.map_outlined),
+                          label: const Text('Open in Maps'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.blue,
+                            padding: EdgeInsets.zero,
+                            alignment: Alignment.centerRight,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ],
             ),
