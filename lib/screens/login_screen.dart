@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'register_screen.dart';
 import 'main_provider_screen.dart';
 
@@ -19,6 +20,21 @@ class _LoginScreenState extends State<LoginScreen> {
   String? passwordError;
   String? generalError;
   bool loading = false;
+
+  Future<void> uploadFcmToken(String token, String fcmToken) async {
+    try {
+      await http.post(
+        Uri.parse('http://10.0.2.2:8000/api/fcm/save-token'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'token': fcmToken}),
+      );
+    } catch (e) {
+      print('❌ Error uploading FCM token: $e');
+    }
+  }
 
   Future<void> login() async {
     setState(() {
@@ -45,6 +61,13 @@ class _LoginScreenState extends State<LoginScreen> {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       final token = data['token'];
+
+      // 🔔 احصل على FCM Token
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      print('FCM Token: ' + (fcmToken ?? 'NULL'));
+      if (fcmToken != null) {
+        await uploadFcmToken(token, fcmToken);
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('✅ Logged in successfully')),
