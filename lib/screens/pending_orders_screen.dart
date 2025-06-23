@@ -240,12 +240,67 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
           ]),
           const SizedBox(height: 10),
           if (order['car'] != null)
-            Row(children: [
-              const Icon(Icons.directions_car_outlined, color: Colors.black54),
-              const SizedBox(width: 8),
-              Text(
-                  '${order['car']['brand']['name']} ${order['car']['model']['name']}'),
-            ]),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.directions_car_outlined,
+                        color: Colors.black54),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${order['car']['brand']['name']} ${order['car']['model']['name']}',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color:
+                                      _getColorFromName(order['car']['color']),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                    width: 1,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                order['car']['color'],
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                if (order['car']['license_plate'] != null &&
+                    order['car']['license_plate'].toString().isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 32),
+                    child: Text(
+                      'License Plate: ${order['car']['license_plate']}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           const SizedBox(height: 10),
           Row(children: [
             const Icon(Icons.location_on_outlined, color: Colors.black54),
@@ -374,5 +429,22 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
               },
             ),
     );
+  }
+
+  Color _getColorFromName(String colorName) {
+    final Map<String, Color> colorMap = {
+      'Black': Colors.black,
+      'White': Colors.white,
+      'Silver': Colors.grey.shade300,
+      'Gray': Colors.grey,
+      'Red': Colors.red,
+      'Blue': Colors.blue,
+      'Green': Colors.green,
+      'Brown': Colors.brown,
+      'Beige': const Color(0xFFF5F5DC),
+      'Gold': const Color(0xFFFFD700),
+    };
+
+    return colorMap[colorName] ?? Colors.grey.shade400;
   }
 }
