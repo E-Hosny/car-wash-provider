@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 
 class CompletedOrdersScreen extends StatefulWidget {
   final String token;
@@ -60,6 +61,47 @@ class _CompletedOrdersScreenState extends State<CompletedOrdersScreen> {
     };
 
     return colorMap[colorName] ?? Colors.grey.shade400;
+  }
+
+  void _showContactOptions(String phoneNumber) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.phone),
+                title: const Text('Call'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final Uri phoneUri = Uri(scheme: 'tel', path: phoneNumber);
+                  if (await canLaunchUrl(phoneUri)) {
+                    await launchUrl(phoneUri);
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.message),
+                title: const Text('WhatsApp'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  // Remove any non-numeric characters from the phone number
+                  final cleanPhone =
+                      phoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
+                  final whatsappUrl = Uri.parse('https://wa.me/$cleanPhone');
+                  if (await canLaunchUrl(whatsappUrl)) {
+                    await launchUrl(whatsappUrl,
+                        mode: LaunchMode.externalApplication);
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -153,8 +195,18 @@ class _CompletedOrdersScreenState extends State<CompletedOrdersScreen> {
                               children: [
                                 const Icon(Icons.phone, color: Colors.black54),
                                 const SizedBox(width: 8),
-                                Text(customer['phone'] ?? 'N/A',
-                                    style: const TextStyle(fontSize: 16)),
+                                GestureDetector(
+                                  onTap: () => _showContactOptions(
+                                      customer['phone'] ?? ''),
+                                  child: Text(
+                                    customer['phone'] ?? 'N/A',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.blue,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                             const SizedBox(height: 10),
