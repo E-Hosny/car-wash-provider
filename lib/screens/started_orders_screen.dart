@@ -11,10 +11,10 @@ class StartedOrdersScreen extends StatefulWidget {
       {super.key, required this.token, required this.role});
 
   @override
-  State<StartedOrdersScreen> createState() => _StartedOrdersScreenState();
+  State<StartedOrdersScreen> createState() => StartedOrdersScreenState();
 }
 
-class _StartedOrdersScreenState extends State<StartedOrdersScreen> {
+class StartedOrdersScreenState extends State<StartedOrdersScreen> {
   List orders = [];
   bool loading = true;
 

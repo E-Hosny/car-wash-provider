@@ -11,10 +11,10 @@ class PendingOrdersScreen extends StatefulWidget {
       {super.key, required this.token, required this.role});
 
   @override
-  State<PendingOrdersScreen> createState() => _PendingOrdersScreenState();
+  State<PendingOrdersScreen> createState() => PendingOrdersScreenState();
 }
 
-class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
+class PendingOrdersScreenState extends State<PendingOrdersScreen> {
   List orders = [];
   List workers = [];
   bool loading = true;

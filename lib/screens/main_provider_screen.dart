@@ -22,17 +22,15 @@ class _MainProviderScreenState extends State<MainProviderScreen> {
   String? role;
   bool loading = true;
 
+  // GlobalKeys for each screen
+  final _pendingKey = GlobalKey<PendingOrdersScreenState>();
+  final _acceptedKey = GlobalKey<AcceptedOrdersScreenState>();
+  final _startedKey = GlobalKey<StartedOrdersScreenState>();
+  final _completedKey = GlobalKey<CompletedOrdersScreenState>();
+
   // 🔔 Notification Plugin
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
-
-  late final List<Widget> _screens;
-  final List<String> _titles = [
-    'Available',
-    'Accepted',
-    'In Progress',
-    'Completed',
-  ];
 
   @override
   void initState() {
@@ -40,12 +38,6 @@ class _MainProviderScreenState extends State<MainProviderScreen> {
     fetchUserRole();
     setupFCMListeners();
     requestNotificationPermission();
-    _screens = [
-      PendingOrdersScreen(token: widget.token, role: 'provider'),
-      AcceptedOrdersScreen(token: widget.token, role: 'provider'),
-      StartedOrdersScreen(token: widget.token, role: 'provider'),
-      CompletedOrdersScreen(token: widget.token, role: 'provider'),
-    ];
   }
 
   // 🟡 إعداد FCM
@@ -144,12 +136,18 @@ class _MainProviderScreenState extends State<MainProviderScreen> {
       );
     }
 
+    // Re-initialize the screens list on every build to ensure they are fresh
+    final List<Widget> screens = [
+      PendingOrdersScreen(token: widget.token, role: role!),
+      AcceptedOrdersScreen(token: widget.token, role: role!),
+      StartedOrdersScreen(token: widget.token, role: role!),
+      CompletedOrdersScreen(token: widget.token, role: role!),
+    ];
+
     return Scaffold(
       backgroundColor: Colors.white,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body:
+          screens[_currentIndex], // Use direct indexing instead of IndexedStack
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) => setState(() => _currentIndex = index),
