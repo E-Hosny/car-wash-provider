@@ -216,7 +216,7 @@ class _AcceptedOrdersScreenState extends State<AcceptedOrdersScreen> {
                   ),
                 ),
                 Text(
-                  '💰 ${order['total']} SAR',
+                  '💰 ${order['total']} AED',
                   style: const TextStyle(
                     color: Colors.green,
                     fontWeight: FontWeight.bold,
@@ -417,7 +417,7 @@ class _AcceptedOrdersScreenState extends State<AcceptedOrdersScreen> {
                   const PopupMenuItem(
                       value: 'in_progress', child: Text('🛠 Start')),
                   const PopupMenuItem(
-                      value: 'completed', child: Text('✔ Complete')),
+                      value: 'completed', child: Text('✔ Finish')),
                 ],
                 child: Container(
                   padding:
@@ -427,7 +427,7 @@ class _AcceptedOrdersScreenState extends State<AcceptedOrdersScreen> {
                     color: Colors.grey.shade100,
                   ),
                   child: const Text(
-                    'Update Status',
+                    'Update',
                     style: TextStyle(color: Colors.black, fontSize: 16),
                   ),
                 ),
@@ -444,10 +444,8 @@ class _AcceptedOrdersScreenState extends State<AcceptedOrdersScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          'Accepted Orders',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
+        title: const Text('Accepted Orders',
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 1,

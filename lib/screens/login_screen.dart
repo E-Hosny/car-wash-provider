@@ -1,7 +1,7 @@
 import 'dart:convert';
+import 'package:car_wash_provider/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'register_screen.dart';
 import 'main_provider_screen.dart';
 
@@ -58,16 +58,20 @@ class _LoginScreenState extends State<LoginScreen> {
       loading = false;
     });
 
+    if (!mounted) return;
+
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       final token = data['token'];
 
-      // 🔔 احصل على FCM Token
-      final fcmToken = await FirebaseMessaging.instance.getToken();
+      // 🔔 Get FCM Token using our service
+      final fcmToken = await NotificationService.getFCMToken();
       print('FCM Token: ' + (fcmToken ?? 'NULL'));
       if (fcmToken != null) {
         await uploadFcmToken(token, fcmToken);
       }
+
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('✅ Logged in successfully')),

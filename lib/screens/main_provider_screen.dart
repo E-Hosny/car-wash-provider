@@ -18,7 +18,7 @@ class MainProviderScreen extends StatefulWidget {
 }
 
 class _MainProviderScreenState extends State<MainProviderScreen> {
-  int currentIndex = 0;
+  int _currentIndex = 0;
   String? role;
   bool loading = true;
 
@@ -26,12 +26,26 @@ class _MainProviderScreenState extends State<MainProviderScreen> {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
+  late final List<Widget> _screens;
+  final List<String> _titles = [
+    'Available',
+    'Accepted',
+    'In Progress',
+    'Completed',
+  ];
+
   @override
   void initState() {
     super.initState();
     fetchUserRole();
     setupFCMListeners();
     requestNotificationPermission();
+    _screens = [
+      PendingOrdersScreen(token: widget.token, role: 'provider'),
+      AcceptedOrdersScreen(token: widget.token, role: 'provider'),
+      StartedOrdersScreen(token: widget.token, role: 'provider'),
+      CompletedOrdersScreen(token: widget.token, role: 'provider'),
+    ];
   }
 
   // 🟡 إعداد FCM
@@ -130,32 +144,35 @@ class _MainProviderScreenState extends State<MainProviderScreen> {
       );
     }
 
-    final screens = [
-      PendingOrdersScreen(token: widget.token, role: role!),
-      AcceptedOrdersScreen(token: widget.token, role: role!),
-      StartedOrdersScreen(token: widget.token, role: role!),
-      CompletedOrdersScreen(token: widget.token, role: role!),
-    ];
-
     return Scaffold(
       backgroundColor: Colors.white,
-      body: screens[currentIndex],
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _screens,
+      ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: currentIndex,
-        backgroundColor: Colors.white,
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
+        type: BottomNavigationBarType.fixed,
         selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.black54,
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-        onTap: (index) => setState(() => currentIndex = index),
+        unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(
-              icon: Icon(Icons.assignment), label: 'Pending'),
+            icon: Icon(Icons.list_alt_outlined),
+            label: 'Available',
+          ),
           BottomNavigationBarItem(
-              icon: Icon(Icons.work_outline), label: 'Accepted'),
+            icon: Icon(Icons.check_circle_outline),
+            label: 'Accepted',
+          ),
           BottomNavigationBarItem(
-              icon: Icon(Icons.play_arrow_outlined), label: 'Started'),
+            icon: Icon(Icons.directions_run_outlined),
+            label: 'In Progress',
+          ),
           BottomNavigationBarItem(
-              icon: Icon(Icons.check_circle), label: 'Completed'),
+            icon: Icon(Icons.task_alt_outlined),
+            label: 'Completed',
+          ),
         ],
       ),
     );

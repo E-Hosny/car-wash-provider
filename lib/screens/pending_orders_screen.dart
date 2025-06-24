@@ -29,19 +29,35 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
   }
 
   Future<void> fetchOrders() async {
-    final res = await http.get(
-      Uri.parse('http://10.0.2.2:8000/api/orders/available'),
-      headers: {'Authorization': 'Bearer ${widget.token}'},
-    );
-    if (res.statusCode == 200) {
-      setState(() {
-        orders = jsonDecode(res.body);
-        loading = false;
-      });
-    } else {
-      print('❌ Error fetching orders: ${res.body}');
-      print('❌ Status code: ${res.statusCode}');
-      print('❌ Headers: ${res.headers}');
+    try {
+      final res = await http.get(
+        Uri.parse('http://10.0.2.2:8000/api/orders/available'),
+        headers: {'Authorization': 'Bearer ${widget.token}'},
+      );
+
+      print('📝 Response status code: ${res.statusCode}');
+      print('📝 Response headers: ${res.headers}');
+      print('📝 Raw response body: ${res.body}');
+
+      if (res.statusCode == 200) {
+        final decodedData = jsonDecode(res.body);
+        print('📝 Decoded data: $decodedData');
+
+        setState(() {
+          orders = decodedData;
+          loading = false;
+        });
+      } else {
+        print('❌ Error fetching orders: ${res.body}');
+        print('❌ Status code: ${res.statusCode}');
+        print('❌ Headers: ${res.headers}');
+        setState(() {
+          loading = false;
+        });
+      }
+    } catch (e, stackTrace) {
+      print('❌ Exception while fetching orders: $e');
+      print('❌ Stack trace: $stackTrace');
       setState(() {
         loading = false;
       });
@@ -261,7 +277,7 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
               Text('Order #${order['id']}',
                   style: const TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 18)),
-              Text('💰 ${order['total'] ?? 0} SAR',
+              Text('💰 ${order['total'] ?? 0} AED',
                   style: const TextStyle(
                       color: Colors.green,
                       fontWeight: FontWeight.bold,
@@ -398,17 +414,21 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  assignedUser != null
-                      ? 'Assigned to: ${assignedUser['name']}'
-                      : 'Not assigned yet',
-                  style: TextStyle(
-                    color: assignedUser != null ? Colors.green : Colors.red,
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    assignedUser != null
+                        ? 'Assigned to: ${assignedUser['name']}'
+                        : 'Not assigned yet',
+                    style: TextStyle(
+                      color: assignedUser != null ? Colors.green : Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                const SizedBox(width: 8),
                 DropdownButton<int>(
-                  hint: const Text("Assign to"),
+                  hint: const Text("Assign"),
                   value: null,
                   items: workers.map<DropdownMenuItem<int>>((worker) {
                     return DropdownMenuItem<int>(
@@ -429,7 +449,7 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
                   ? ElevatedButton.icon(
                       onPressed: () => acceptOrder(order['id']),
                       icon: const Icon(Icons.check_circle_outline),
-                      label: const Text('Accept Order'),
+                      label: const Text('Accept'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
                         foregroundColor: Colors.white,
@@ -441,7 +461,7 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
                         const PopupMenuItem(
                             value: 'in_progress', child: Text('🛠 Start')),
                         const PopupMenuItem(
-                            value: 'completed', child: Text('✔ Complete')),
+                            value: 'completed', child: Text('✔ Finish')),
                       ],
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -450,7 +470,7 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
                           borderRadius: BorderRadius.circular(8),
                           color: Colors.grey.shade100,
                         ),
-                        child: const Text('Update Status'),
+                        child: const Text('Update'),
                       ),
                     ),
             ),
@@ -464,7 +484,7 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Pending Orders',
+        title: const Text('Available Orders',
             style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: Colors.white,

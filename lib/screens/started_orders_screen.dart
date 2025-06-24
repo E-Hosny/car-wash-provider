@@ -440,7 +440,7 @@ class _StartedOrdersScreenState extends State<StartedOrdersScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
-          'Started Orders',
+          'In-Progress Orders',
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
