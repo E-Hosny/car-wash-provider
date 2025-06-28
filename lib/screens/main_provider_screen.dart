@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'pending_orders_screen.dart';
 import 'accepted_orders_screen.dart';
@@ -31,6 +32,8 @@ class _MainProviderScreenState extends State<MainProviderScreen> {
   // 🔔 Notification Plugin
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+
+  final baseUrl = dotenv.env['BASE_URL']!;
 
   @override
   void initState() {
@@ -78,7 +81,7 @@ class _MainProviderScreenState extends State<MainProviderScreen> {
 
   Future<void> fetchUserRole() async {
     final res = await http.get(
-      Uri.parse('http://10.0.2.2:8000/api/user'),
+      Uri.parse('$baseUrl/api/user'),
       headers: {'Authorization': 'Bearer ${widget.token}'},
     );
 

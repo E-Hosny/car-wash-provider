@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class CompletedOrdersScreen extends StatefulWidget {
   final String token;
@@ -24,8 +25,9 @@ class CompletedOrdersScreenState extends State<CompletedOrdersScreen> {
   }
 
   Future<void> fetchOrders() async {
+    final baseUrl = dotenv.env['BASE_URL']!;
     final res = await http.get(
-      Uri.parse('http://10.0.2.2:8000/api/orders/completed'),
+      Uri.parse('$baseUrl/api/orders/completed'),
       headers: {'Authorization': 'Bearer ${widget.token}'},
     );
     if (res.statusCode == 200) {

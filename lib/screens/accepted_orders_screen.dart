@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:map_launcher/map_launcher.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AcceptedOrdersScreen extends StatefulWidget {
   final String token;
@@ -25,8 +26,9 @@ class AcceptedOrdersScreenState extends State<AcceptedOrdersScreen> {
   }
 
   Future<void> fetchOrders() async {
+    final baseUrl = dotenv.env['BASE_URL']!;
     final res = await http.get(
-      Uri.parse('http://10.0.2.2:8000/api/orders/accepted'),
+      Uri.parse('$baseUrl/api/orders/accepted'),
       headers: {'Authorization': 'Bearer ${widget.token}'},
     );
     if (res.statusCode == 200) {
@@ -42,8 +44,9 @@ class AcceptedOrdersScreenState extends State<AcceptedOrdersScreen> {
   }
 
   Future<void> updateStatus(int orderId, String status) async {
+    final baseUrl = dotenv.env['BASE_URL']!;
     final res = await http.post(
-      Uri.parse('http://10.0.2.2:8000/api/orders/$orderId/status'),
+      Uri.parse('$baseUrl/api/orders/$orderId/status'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:map_launcher/map_launcher.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class PendingOrdersScreen extends StatefulWidget {
   final String token;
@@ -18,6 +19,7 @@ class PendingOrdersScreenState extends State<PendingOrdersScreen> {
   List orders = [];
   List workers = [];
   bool loading = true;
+  final baseUrl = dotenv.env['BASE_URL']!;
 
   @override
   void initState() {
@@ -31,7 +33,7 @@ class PendingOrdersScreenState extends State<PendingOrdersScreen> {
   Future<void> fetchOrders() async {
     try {
       final res = await http.get(
-        Uri.parse('http://10.0.2.2:8000/api/orders/available'),
+        Uri.parse('$baseUrl/api/orders/available'),
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
 
@@ -66,7 +68,7 @@ class PendingOrdersScreenState extends State<PendingOrdersScreen> {
 
   Future<void> fetchWorkers() async {
     final res = await http.get(
-      Uri.parse('http://10.0.2.2:8000/api/workers'),
+      Uri.parse('$baseUrl/api/workers'),
       headers: {'Authorization': 'Bearer ${widget.token}'},
     );
     if (res.statusCode == 200) {
@@ -80,7 +82,7 @@ class PendingOrdersScreenState extends State<PendingOrdersScreen> {
 
   Future<void> assignToWorker(int orderId, int workerId) async {
     final res = await http.post(
-      Uri.parse('http://10.0.2.2:8000/api/orders/$orderId/assign'),
+      Uri.parse('$baseUrl/api/orders/$orderId/assign'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',
@@ -101,7 +103,7 @@ class PendingOrdersScreenState extends State<PendingOrdersScreen> {
 
   Future<void> acceptOrder(int orderId) async {
     final res = await http.post(
-      Uri.parse('http://10.0.2.2:8000/api/orders/$orderId/accept'),
+      Uri.parse('$baseUrl/api/orders/$orderId/accept'),
       headers: {'Authorization': 'Bearer ${widget.token}'},
     );
     if (res.statusCode == 200) {
@@ -118,7 +120,7 @@ class PendingOrdersScreenState extends State<PendingOrdersScreen> {
 
   Future<void> updateStatus(int orderId, String status) async {
     final res = await http.post(
-      Uri.parse('http://10.0.2.2:8000/api/orders/$orderId/status'),
+      Uri.parse('$baseUrl/api/orders/$orderId/status'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',

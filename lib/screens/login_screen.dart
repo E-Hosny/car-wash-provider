@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:car_wash_provider/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'register_screen.dart';
 import 'main_provider_screen.dart';
 
@@ -21,10 +22,12 @@ class _LoginScreenState extends State<LoginScreen> {
   String? generalError;
   bool loading = false;
 
+  final baseUrl = dotenv.env['BASE_URL']!;
+
   Future<void> uploadFcmToken(String token, String fcmToken) async {
     try {
       await http.post(
-        Uri.parse('http://10.0.2.2:8000/api/fcm/save-token'),
+        Uri.parse('$baseUrl/api/fcm/save-token'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -45,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:8000/api/login'),
+      Uri.parse('$baseUrl/api/login'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'phone': phoneController.text.trim(),

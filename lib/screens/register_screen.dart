@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -30,7 +31,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           passwordError = confirmPasswordError = generalError = null;
     });
 
-    final url = Uri.parse('http://10.0.2.2:8000/api/register');
+    final baseUrl = dotenv.env['BASE_URL']!;
+    final url = Uri.parse('$baseUrl/api/register');
 
     final response = await http.post(
       url,
