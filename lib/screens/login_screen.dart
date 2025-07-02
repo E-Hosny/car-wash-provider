@@ -206,19 +206,19 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                );
-              },
-              child: const Text(
-                'Don\'t have an account? Register here',
-                style: TextStyle(color: Colors.black54),
-              ),
-            ),
+            // const SizedBox(height: 16),
+            // TextButton(
+            //   onPressed: () {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(builder: (_) => const RegisterScreen()),
+            //     );
+            //   },
+            //   child: const Text(
+            //     'Don\'t have an account? Register here',
+            //     style: TextStyle(color: Colors.black54),
+            //   ),
+            // ),
           ],
         ),
       ),
