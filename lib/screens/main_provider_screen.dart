@@ -4,11 +4,13 @@ import 'package:http/http.dart' as http;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'pending_orders_screen.dart';
 import 'accepted_orders_screen.dart';
 import 'started_orders_screen.dart';
 import 'completed_orders_screen.dart';
+import 'login_screen.dart';
 
 class MainProviderScreen extends StatefulWidget {
   final String token;
@@ -149,6 +151,28 @@ class _MainProviderScreenState extends State<MainProviderScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.black),
+            tooltip: 'تسجيل الخروج',
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.remove('auth_token');
+              if (mounted) {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false,
+                );
+              }
+            },
+          ),
+        ],
+      ),
       body:
           screens[_currentIndex], // Use direct indexing instead of IndexedStack
       bottomNavigationBar: BottomNavigationBar(

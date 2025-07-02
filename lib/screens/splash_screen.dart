@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart';
+import 'main_provider_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,14 +15,24 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    _checkLoginStatus();
+  }
 
-    // تأخير 3 ثواني قبل الانتقال إلى صفحة تسجيل الدخول
-    Timer(const Duration(seconds: 3), () {
+  Future<void> _checkLoginStatus() async {
+    await Future.delayed(const Duration(seconds: 2)); // لإظهار اللوغو قليلاً
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token != null && token.isNotEmpty) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => MainProviderScreen(token: token)),
+      );
+    } else {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
-    });
+    }
   }
 
   @override
