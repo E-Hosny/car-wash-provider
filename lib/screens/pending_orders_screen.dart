@@ -379,6 +379,18 @@ class PendingOrdersScreenState extends State<PendingOrdersScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if ((order['street'] ?? '').toString().isNotEmpty)
+                    Text('Street: ${order['street']}',
+                        style: const TextStyle(fontSize: 14)),
+                  if ((order['building'] ?? '').toString().isNotEmpty)
+                    Text('Building: ${order['building']}',
+                        style: const TextStyle(fontSize: 14)),
+                  if ((order['floor'] ?? '').toString().isNotEmpty)
+                    Text('Floor: ${order['floor']}',
+                        style: const TextStyle(fontSize: 14)),
+                  if ((order['apartment'] ?? '').toString().isNotEmpty)
+                    Text('Apartment: ${order['apartment']}',
+                        style: const TextStyle(fontSize: 14)),
                   Text(order['address'] ?? 'N/A'),
                   if (latitude != null && longitude != null)
                     TextButton.icon(
