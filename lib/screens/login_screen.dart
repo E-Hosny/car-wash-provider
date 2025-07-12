@@ -14,10 +14,10 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final phoneController = TextEditingController();
+  final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
-  String? phoneError;
+  String? emailError;
   String? passwordError;
   String? generalError;
   bool loading = false;
@@ -41,63 +41,78 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> login() async {
     setState(() {
-      phoneError = null;
+      emailError = null;
       passwordError = null;
       generalError = null;
       loading = true;
     });
 
+    print('🟢 BASE_URL: ' + baseUrl);
+    print('🟢 Login URL: ' + Uri.parse('$baseUrl/api/login').toString());
     final response = await http.post(
       Uri.parse('$baseUrl/api/login'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
       body: jsonEncode({
-        'phone': phoneController.text.trim(),
+        'email': emailController.text.trim(),
         'password': passwordController.text.trim(),
         'role': 'provider',
       }),
     );
-
     setState(() {
       loading = false;
     });
-
     if (!mounted) return;
-
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final token = data['token'];
-
-      // 🔔 Get FCM Token using our service
-      final fcmToken = await NotificationService.getFCMToken();
-      print('FCM Token: ' + (fcmToken ?? 'NULL'));
-      if (fcmToken != null) {
-        await uploadFcmToken(token, fcmToken);
+      print('🔵 statusCode: ${response.statusCode}');
+      print('🔵 response.body: ${response.body}');
+      try {
+        final data = jsonDecode(response.body);
+        final token = data['token'];
+        final fcmToken = await NotificationService.getFCMToken();
+        print('FCM Token: ' + (fcmToken ?? 'NULL'));
+        if (fcmToken != null) {
+          await uploadFcmToken(token, fcmToken);
+        }
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ Logged in successfully')),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => MainProviderScreen(token: token)),
+        );
+      } catch (e) {
+        print('❌ JSON decode error: ${e.toString()}');
+        setState(() {
+          generalError = '❌ Unexpected response format (200): ' + e.toString();
+        });
       }
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('✅ Logged in successfully')),
-      );
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => MainProviderScreen(token: token)),
-      );
     } else {
-      final data = jsonDecode(response.body);
-      if (data['errors'] != null) {
+      print('🔴 statusCode: ${response.statusCode}');
+      print('🔴 response.body: ${response.body}');
+      try {
+        final data = jsonDecode(response.body);
+        if (data['errors'] != null) {
+          setState(() {
+            emailError = data['errors']['email']?.first;
+            passwordError = data['errors']['password']?.first;
+          });
+        } else if (data['message'] != null) {
+          setState(() {
+            generalError = data['message'];
+          });
+        } else {
+          setState(() {
+            generalError = '❌ Unexpected error occurred';
+          });
+        }
+      } catch (e) {
+        print('❌ JSON decode error: ${e.toString()}');
         setState(() {
-          phoneError = data['errors']['phone']?.first;
-          passwordError = data['errors']['password']?.first;
-        });
-      } else if (data['message'] != null) {
-        setState(() {
-          generalError = data['message'];
-        });
-      } else {
-        setState(() {
-          generalError = '❌ Unexpected error occurred';
+          generalError = '❌ Unexpected response format: ' + e.toString();
         });
       }
     }
@@ -157,11 +172,11 @@ class _LoginScreenState extends State<LoginScreen> {
             Image.asset('assets/logo.png', height: 250, width: 250),
             const SizedBox(height: 30),
             buildTextField(
-              label: 'Phone Number',
-              icon: Icons.phone,
-              controller: phoneController,
-              keyboardType: TextInputType.phone,
-              errorText: phoneError,
+              label: 'Email',
+              icon: Icons.email,
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              errorText: emailError,
             ),
             const SizedBox(height: 16),
             buildTextField(
