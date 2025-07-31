@@ -46,7 +46,16 @@ class PendingOrdersScreenState extends State<PendingOrdersScreen> {
         print('📝 Decoded data: $decodedData');
 
         setState(() {
-          orders = decodedData;
+          // Sort orders by created_at in descending order (newest first)
+          orders = List.from(decodedData);
+          orders.sort((a, b) {
+            final aDate = DateTime.tryParse(a['created_at'] ?? '');
+            final bDate = DateTime.tryParse(b['created_at'] ?? '');
+            if (aDate == null && bDate == null) return 0;
+            if (aDate == null) return 1;
+            if (bDate == null) return -1;
+            return bDate.compareTo(aDate); // Descending order
+          });
           loading = false;
         });
       } else {
@@ -252,6 +261,10 @@ class PendingOrdersScreenState extends State<PendingOrdersScreen> {
     final services = order['services'] as List;
     final assignedUser = order['assigned_user'];
 
+    // Multi-car order handling
+    final bool isMultiCar = order['is_multi_car'] ?? false;
+    final allCars = order['all_cars'] ?? [];
+
     // Safe conversion of latitude and longitude
     final latitude = order['latitude'] != null
         ? double.tryParse(order['latitude'].toString())
@@ -276,9 +289,32 @@ class PendingOrdersScreenState extends State<PendingOrdersScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Order #${order['id']}',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 18)),
+              Row(
+                children: [
+                  Text('Order #${order['id']}',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 18)),
+                  if (isMultiCar) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Multi',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.blue.shade800,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
               Text('💰 ${order['total'] ?? 0} AED',
                   style: const TextStyle(
                       color: Colors.green,
@@ -309,7 +345,28 @@ class PendingOrdersScreenState extends State<PendingOrdersScreen> {
             ),
           ]),
           const SizedBox(height: 10),
-          if (order['car'] != null)
+          if (isMultiCar && allCars.isNotEmpty) ...[
+            // عرض السيارات المتعددة
+            Row(
+              children: [
+                const Icon(Icons.directions_car_outlined,
+                    color: Colors.black54),
+                const SizedBox(width: 8),
+                Text(
+                  'Cars: ${order['cars_count'] ?? allCars.length} vehicles',
+                  style: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            // تفاصيل كل سيارة
+            for (int i = 0; i < allCars.length; i++) ...[
+              _buildMultiCarDetail(allCars[i], i),
+            ]
+          ] else if (order['car'] != null) ...[
+            // عرض السيارة الواحدة (النظام القديم)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -371,6 +428,7 @@ class PendingOrdersScreenState extends State<PendingOrdersScreen> {
                   ),
               ],
             ),
+          ],
           const SizedBox(height: 10),
           Row(children: [
             const Icon(Icons.location_on_outlined, color: Colors.black54),
@@ -515,6 +573,99 @@ class PendingOrdersScreenState extends State<PendingOrdersScreen> {
               },
             ),
     );
+  }
+
+  String _getCarDisplayName(dynamic carData) {
+    try {
+      if (carData == null) return 'Unknown Car';
+
+      // Handle both old format (object with brand/model) and new format (direct strings)
+      if (carData['brand'] != null && carData['model'] != null) {
+        final brandName = carData['brand']['name'] ?? carData['brand'];
+        final modelName = carData['model']['name'] ?? carData['model'];
+        return '$brandName $modelName';
+      } else if (carData['brand'] != null) {
+        return carData['brand'].toString();
+      } else if (carData['model'] != null) {
+        return carData['model'].toString();
+      } else {
+        return 'Unknown Car';
+      }
+    } catch (e) {
+      return 'Car data error';
+    }
+  }
+
+  String _getServicesDisplayText(List servicesList) {
+    try {
+      if (servicesList.isEmpty) return 'No services';
+
+      final serviceNames = servicesList
+          .map((s) {
+            // Handle both old format (object with name) and new format (direct string)
+            if (s is Map && s['name'] != null) {
+              return s['name'].toString();
+            } else if (s is String) {
+              return s;
+            } else {
+              return 'Unknown Service';
+            }
+          })
+          .where((name) => name.isNotEmpty)
+          .toList();
+
+      return serviceNames.isNotEmpty
+          ? serviceNames.join(' • ')
+          : 'No valid services';
+    } catch (e) {
+      return 'Services data error';
+    }
+  }
+
+  Widget _buildMultiCarDetail(dynamic carDetail, int carIndex) {
+    try {
+      final carData = carDetail; // The car data is directly in carDetail
+      final carServices =
+          carDetail != null ? (carDetail['services'] ?? []) : [];
+
+      return Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '🚗 Car ${carIndex + 1}: ${_getCarDisplayName(carData)}',
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '🔧 Services: ${_getServicesDisplayText(carServices)}',
+              style: const TextStyle(fontSize: 13, color: Colors.black87),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.red.shade50,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.red.shade200),
+        ),
+        child: Text(
+          '❌ Error displaying car ${carIndex + 1}',
+          style: TextStyle(color: Colors.red, fontSize: 12),
+        ),
+      );
+    }
   }
 
   Color _getColorFromName(String colorName) {
