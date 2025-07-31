@@ -33,8 +33,9 @@ android {
         applicationId "com.washluxuria.provider"
         minSdk = 21
         targetSdk = 35
-        versionCode project.hasProperty('VERSION_CODE') ? project.VERSION_CODE.toInteger() : 99
-        versionName project.hasProperty('VERSION_NAME') ? project.VERSION_NAME : "9.9.9"
+        versionCode 100
+        versionName "1.0.5"
+        multiDexEnabled true
     }
 
     signingConfigs {
@@ -54,6 +55,19 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    // Add bundle configuration for better compatibility
+    bundle {
+        language {
+            enableSplit = false
+        }
+        density {
+            enableSplit = false
+        }
+        abi {
+            enableSplit = false
+        }
+    }
 }
 
 flutter {
@@ -64,6 +78,7 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:32.7.2')
     implementation 'com.google.firebase:firebase-analytics'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.24"
+    implementation 'androidx.multidex:multidex:2.0.1'
 }
 
 apply plugin: 'com.google.gms.google-services'
