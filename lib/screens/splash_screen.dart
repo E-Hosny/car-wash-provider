@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:car_wash_provider/services/auth_service.dart';
+import 'package:car_wash_provider/services/token_validation_service.dart';
 import 'login_screen.dart';
 import 'main_provider_screen.dart';
 
@@ -20,14 +21,35 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _checkLoginStatus() async {
     await Future.delayed(const Duration(seconds: 2)); // لإظهار اللوغو قليلاً
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
-    if (token != null && token.isNotEmpty) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => MainProviderScreen(token: token)),
-      );
-    } else {
+
+    if (!mounted) return;
+
+    // التحقق من حالة تسجيل الدخول
+    final isLoggedIn = await AuthService.isLoggedIn();
+
+    if (isLoggedIn) {
+      final token = await AuthService.getToken();
+      if (token != null) {
+        // التحقق من صلاحية التوكن مع الخادم
+        final isTokenValid =
+            await TokenValidationService.isTokenStillValid(token);
+
+        if (isTokenValid && mounted) {
+          // التوكن صالح، انتقل إلى الشاشة الرئيسية
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => MainProviderScreen(token: token)),
+          );
+          return;
+        } else {
+          // التوكن غير صالح، احذفه وانتقل إلى تسجيل الدخول
+          await AuthService.clearUserData();
+        }
+      }
+    }
+
+    // إذا لم يكن هناك تسجيل دخول صالح، انتقل إلى شاشة تسجيل الدخول
+    if (mounted) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),

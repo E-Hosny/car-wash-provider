@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:car_wash_provider/services/auth_service.dart';
 
 import 'pending_orders_screen.dart';
 import 'accepted_orders_screen.dart';
@@ -160,8 +160,8 @@ class _MainProviderScreenState extends State<MainProviderScreen> {
             icon: const Icon(Icons.logout, color: Colors.black),
             tooltip: 'تسجيل الخروج',
             onPressed: () async {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.remove('auth_token');
+              // حذف جميع بيانات المستخدم
+              await AuthService.clearUserData();
               if (mounted) {
                 Navigator.pushAndRemoveUntil(
                   context,

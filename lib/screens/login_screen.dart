@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:car_wash_provider/notification_service.dart';
+import 'package:car_wash_provider/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -71,6 +72,16 @@ class _LoginScreenState extends State<LoginScreen> {
       try {
         final data = jsonDecode(response.body);
         final token = data['token'];
+        final userRole = data['user']?['role'] ?? 'provider';
+        final userEmail = emailController.text.trim();
+
+        // حفظ بيانات المستخدم محلياً
+        await AuthService.saveUserData(
+          token: token,
+          email: userEmail,
+          role: userRole,
+        );
+
         final fcmToken = await NotificationService.getFCMToken();
         print('FCM Token: ' + (fcmToken ?? 'NULL'));
         if (fcmToken != null) {
@@ -78,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Logged in successfully')),
+          const SnackBar(content: Text('✅ تم تسجيل الدخول بنجاح')),
         );
         Navigator.pushReplacement(
           context,
