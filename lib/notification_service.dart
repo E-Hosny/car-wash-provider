@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'dart:io';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin
@@ -30,10 +31,25 @@ class NotificationService {
       print('- Badge setting: ${settings.badge}');
 
       print('🎵 Setting up local notifications...');
+
+      // Android initialization
       const AndroidInitializationSettings initializationSettingsAndroid =
           AndroidInitializationSettings('@mipmap/ic_launcher');
+
+      // iOS initialization
+      const DarwinInitializationSettings initializationSettingsIOS =
+          DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
+
       const InitializationSettings initializationSettings =
-          InitializationSettings(android: initializationSettingsAndroid);
+          InitializationSettings(
+        android: initializationSettingsAndroid,
+        iOS: initializationSettingsIOS,
+      );
+
       await _flutterLocalNotificationsPlugin.initialize(initializationSettings);
       print('✅ Local notifications initialized');
 
@@ -77,6 +93,7 @@ class NotificationService {
       print('- Title: ${notification.title}');
       print('- Body: ${notification.body}');
 
+      // Android notification details
       const AndroidNotificationDetails androidPlatformChannelSpecifics =
           AndroidNotificationDetails(
         'high_importance_channel',
@@ -86,8 +103,19 @@ class NotificationService {
         priority: Priority.high,
         showWhen: false,
       );
-      const NotificationDetails platformChannelSpecifics =
-          NotificationDetails(android: androidPlatformChannelSpecifics);
+
+      // iOS notification details
+      const DarwinNotificationDetails iOSPlatformChannelSpecifics =
+          DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      );
+
+      const NotificationDetails platformChannelSpecifics = NotificationDetails(
+        android: androidPlatformChannelSpecifics,
+        iOS: iOSPlatformChannelSpecifics,
+      );
 
       await _flutterLocalNotificationsPlugin.show(
         notification.hashCode,
